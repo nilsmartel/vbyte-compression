@@ -141,20 +141,20 @@ impl VbyteEncode for bool {
 
 impl VbyteEncode for f64 {
     fn encode(&self, out: &mut Vec<u64>) {
-        let data: u64 = f64::to_bits(*self) ;
+        let data: u64 = f64::to_bits(*self);
         out.push(data);
     }
     fn decode(fields: &[u64]) -> Result<(Self, &[u64]), &'static str> {
         fields
             .split_first()
-            .map(|(&v, rest)| (f64::from_bits(v) , rest))
+            .map(|(&v, rest)| (f64::from_bits(v), rest))
             .ok_or("not enough data")
     }
 }
 
 impl VbyteEncode for f32 {
     fn encode(&self, out: &mut Vec<u64>) {
-        let data: u64 = f32::to_bits(*self) as u64 ;
+        let data: u64 = f32::to_bits(*self) as u64;
         out.push(data);
     }
     fn decode(fields: &[u64]) -> Result<(Self, &[u64]), &'static str> {
@@ -220,7 +220,10 @@ mod tests {
         let points = vec![
             MyPoint { x: 0, y: 0 },
             MyPoint { x: 100, y: 200 },
-            MyPoint { x: u32::MAX, y: u32::MAX },
+            MyPoint {
+                x: u32::MAX,
+                y: u32::MAX,
+            },
         ];
         let compressed = MyPoint::compress(&points);
         let restored = compressed.decompress().unwrap();
