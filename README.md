@@ -30,3 +30,32 @@ assert_eq!(value, 1024);
 let encoded = compress_list(&[1, 2, 3, 300]);
 let values = decompress_list(&encoded).unwrap();
 ```
+
+## Custom types
+
+For types that decompose into more than one integer, implement `VbyteEncode` from the `utils` module. Only `encode` and `decode` need to be defined; `compress` is provided automatically.
+
+```rust
+// exposes trait VbyteEncode and struct CompressedList<T>
+use vbyte::utils::*;
+
+struct Point { x: u32, y: u32 }
+
+impl VbyteEncode for Point {
+    fn encode(&self, out: &mut Vec<u64>) {
+        self.x.encode(out);
+        self.y.encode(out);
+    }
+    fn decode(fields: &[u64]) -> Result<(Self, &[u64]), &'static str> {
+        let (x, fields) = u32::decode(fields)?;
+        let (y, fields) = u32::decode(fields)?;
+        Ok((Point { x, y }, fields))
+    }
+}
+
+let points = vec![Point { x: 0, y: 1 }, Point { x: 100, y: 200 }];
+let compressed: CompressedList<Point> = Point::compress(&points);
+let restored = compressed.decompress().unwrap();
+```
+
+All primitive integer types and tuples of them implement `VbyteEncode` without any additional code.
