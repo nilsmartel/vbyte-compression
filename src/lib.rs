@@ -119,6 +119,7 @@ mod tests {
     }
 }
 
+/// Encodes `val` into `buffer` using variable-byte encoding.
 pub fn write_number(mut val: u64, buffer: &mut impl Write) -> std::io::Result<()> {
     if val == 0 {
         buffer.write(&[0])?;
@@ -144,6 +145,7 @@ pub fn write_number(mut val: u64, buffer: &mut impl Write) -> std::io::Result<()
     Ok(())
 }
 
+/// Encodes `val` as a variable-length byte vector.
 pub fn compress(mut val: u64) -> Vec<u8> {
     if val == 0 {
         return vec![0];
@@ -171,6 +173,7 @@ pub fn compress(mut val: u64) -> Vec<u8> {
     v
 }
 
+/// Encodes a slice of integers into a contiguous byte buffer.
 pub fn compress_list(vs: &[u64]) -> Vec<u8> {
     let mut buffer = Vec::new();
     for v in vs {
@@ -181,8 +184,10 @@ pub fn compress_list(vs: &[u64]) -> Vec<u8> {
     buffer
 }
 
-/// decompresses a string, returning the rest of the input as second argument.
-/// If an error occured, it means that more data was expected
+/// Decodes one value from the front of `data`.
+///
+/// Returns the decoded integer and any remaining bytes. Returns an error
+/// if the input ends before the value is complete.
 pub fn decompress(data: &[u8]) -> Result<(u64, &[u8]), &str> {
     let mut val = 0u64;
 
@@ -215,6 +220,7 @@ pub fn decompress(data: &[u8]) -> Result<(u64, &[u8]), &str> {
     Err("end of input reached")
 }
 
+/// Decodes exactly `N` values from `data`, returning the remainder.
 pub fn decompress_n<const N: usize>(mut data: &[u8]) -> Result<([u64; N], &[u8]), &str> {
     let mut out = [0; N];
     for entry in out.iter_mut() {
@@ -226,6 +232,7 @@ pub fn decompress_n<const N: usize>(mut data: &[u8]) -> Result<([u64; N], &[u8])
     Ok((out, data))
 }
 
+/// Decodes all values from `data` until the buffer is exhausted.
 pub fn decompress_list(mut data: &[u8]) -> Result<Vec<u64>, &str> {
     let mut out = Vec::with_capacity(data.len());
     while !data.is_empty() {
