@@ -56,6 +56,11 @@ pub struct CompressedList<T: VbyteEncode> {
     _ty: PhantomData<T>,
 }
 
+/// Wrapper for VbyteEncode::compress
+pub fn compress<T>(elements: &[T]) -> CompressedList<T> where T: VbyteEncode {
+    T::compress(elements)
+}
+
 impl<T: VbyteEncode> CompressedList<T> {
     /// Returns the raw compressed bytes.
     pub fn get_compressed_bytes(&self) -> &[u8] {
