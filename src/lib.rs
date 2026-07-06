@@ -1,4 +1,5 @@
 use std::io::Write;
+pub mod utils;
 
 #[cfg(test)]
 mod tests {
