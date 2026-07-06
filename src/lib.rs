@@ -117,6 +117,117 @@ mod tests {
             assert!(rest.is_empty(), "no data should be remaining.");
         }
     }
+
+    // --- failure cases ---
+
+    #[test]
+    fn decompress_empty() {
+        assert!(decompress(&[]).is_err());
+    }
+
+    #[test]
+    fn decompress_truncated_single() {
+        // continuation bit set, no following byte
+        assert!(decompress(&[0x80]).is_err());
+    }
+
+    #[test]
+    fn decompress_truncated_multi() {
+        // three bytes, all with continuation bit, no terminator
+        assert!(decompress(&[0xFF, 0xFF, 0xFF]).is_err());
+    }
+
+    #[test]
+    fn decompress_n_insufficient() {
+        let buf = compress(1);
+        assert!(decompress_n::<3>(&buf).is_err());
+    }
+
+    #[test]
+    fn decompress_list_trailing_continuation() {
+        let mut buf = compress_list(&[1u64, 2]);
+        buf.push(0x80); // partial value at end
+        assert!(decompress_list(&buf).is_err());
+    }
+
+    // --- byte-boundary values ---
+
+    #[test]
+    fn boundary_127() {
+        assert_eq!(compress(127), [0x7F]);
+        let (v, rest) = decompress(&[0x7F]).unwrap();
+        assert_eq!(v, 127);
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn boundary_128() {
+        assert_eq!(compress(128), [0x80, 0x01]);
+        let (v, rest) = decompress(&[0x80, 0x01]).unwrap();
+        assert_eq!(v, 128);
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn boundary_16383() {
+        assert_eq!(compress(16383), [0xFF, 0x7F]);
+        let (v, rest) = decompress(&[0xFF, 0x7F]).unwrap();
+        assert_eq!(v, 16383);
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn boundary_16384() {
+        assert_eq!(compress(16384), [0x80, 0x80, 0x01]);
+        let (v, rest) = decompress(&[0x80, 0x80, 0x01]).unwrap();
+        assert_eq!(v, 16384);
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn boundary_u64_max() {
+        let mut expected = vec![0xFF; 9];
+        expected.push(0x01);
+        assert_eq!(compress(u64::MAX), expected);
+        let (v, rest) = decompress(&expected).unwrap();
+        assert_eq!(v, u64::MAX);
+        assert!(rest.is_empty());
+    }
+
+    // --- consistency and trivial cases ---
+
+    #[test]
+    fn write_number_matches_compress() {
+        for val in [0u64, 1, 127, 128, 16383, 16384, u64::MAX] {
+            let mut buf = Vec::new();
+            write_number(val, &mut buf).unwrap();
+            assert_eq!(buf, compress(val), "mismatch for {val}");
+        }
+    }
+
+    #[test]
+    fn decompress_n_zero() {
+        let data = &[1u8, 2, 3];
+        let (arr, rest) = decompress_n::<0>(data).unwrap();
+        assert_eq!(arr, []);
+        assert_eq!(rest, data);
+    }
+
+    #[test]
+    fn compress_list_empty() {
+        assert_eq!(compress_list(&[]), Vec::<u8>::new());
+    }
+
+    #[test]
+    fn decompress_list_empty() {
+        assert_eq!(decompress_list(&[]).unwrap(), Vec::<u64>::new());
+    }
+
+    #[test]
+    fn compress_list_zeros() {
+        assert_eq!(compress_list(&[0u64, 0, 0]), [0u8, 0, 0]);
+        assert_eq!(decompress_list(&[0u8, 0, 0]).unwrap(), [0u64, 0, 0]);
+    }
 }
 
 /// Encodes `val` into `buffer` using variable-byte encoding.
