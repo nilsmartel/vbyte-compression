@@ -139,6 +139,32 @@ impl VbyteEncode for bool {
     }
 }
 
+impl VbyteEncode for f64 {
+    fn encode(&self, out: &mut Vec<u64>) {
+        let data: u64 = f64::to_bits(*self) ;
+        out.push(data);
+    }
+    fn decode(fields: &[u64]) -> Result<(Self, &[u64]), &'static str> {
+        fields
+            .split_first()
+            .map(|(&v, rest)| (f64::from_bits(v) , rest))
+            .ok_or("not enough data")
+    }
+}
+
+impl VbyteEncode for f32 {
+    fn encode(&self, out: &mut Vec<u64>) {
+        let data: u64 = f32::to_bits(*self) as u64 ;
+        out.push(data);
+    }
+    fn decode(fields: &[u64]) -> Result<(Self, &[u64]), &'static str> {
+        fields
+            .split_first()
+            .map(|(&v, rest)| (f32::from_bits(v as u32), rest))
+            .ok_or("not enough data")
+    }
+}
+
 // Blank implementation for tuples
 
 impl<A: VbyteEncode, B: VbyteEncode> VbyteEncode for (A, B) {
