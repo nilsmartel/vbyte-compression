@@ -167,12 +167,6 @@ impl<A: VbyteEncode, B: VbyteEncode, C: VbyteEncode> VbyteEncode for (A, B, C) {
     }
 }
 
-
-/// Compress a slice of values. Equivalent to `T::compress(data)`.
-pub fn compress<T: VbyteEncode>(data: &[T]) -> CompressedList<T> {
-    T::compress(data)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
