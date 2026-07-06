@@ -1,6 +1,6 @@
 # vbyte
 
-Variable-byte encoding for integers, designed to compresses values without loss.
+Variable-byte encoding for integers, designed to compresses values without loss and without dependencies.
 The algorithm itself is implemented to compress/decompress unsigned 64-bit,
 but other values that can be converted to (a subset of) unsigned 64 bit integers and converted back (from that subset) are fine to be used as well.
 
